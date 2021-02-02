@@ -1,0 +1,74 @@
+{% extends "dash-layout.html" %}
+
+{% block dashScript %}
+{% endblock %}
+
+{% block dashTitle %}
+    {{ user }}'s Account
+{% endblock %}
+
+
+{% block dashMain %}
+
+    {% if msg %}
+        {% if msg == "US" %}
+            <div class="alert alert-success border text-center" role="alert">
+                Successfully Updated!
+            </div>
+        {% elif msg == "UAE" %}
+            <div class="alert alert-danger border text-center" role="alert">
+                Update Failed! Username Already Exists!
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <div class="update-account-form">
+        <form action="/updateUsername" method='post'>
+
+            <input name="userID" type="text" value="{{ user_id }}" readonly hidden>
+
+            <h1>Current Username: {{ user }}</h1>
+            <label for="newName">Change Username</label>
+            <div class="form-group">
+                <input class="form-control" placeholder="Enter new username..." type="text" name="newName" required>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-outline-light" type="submit">Update Username</button>
+            </div>
+        </form>
+        <form action="/updatePassword" method='post'>
+
+            <input name="userID" type="text" value="{{ user_id }}" readonly hidden>
+
+            <div class="form-group">
+                <label for="newPass">Change Password</label>
+                <input class="form-control" placeholder="Enter new password..." type="password" name="newPass">
+            </div>
+            <div class="form-group">
+                <input class="form-control" placeholder="Confirm new password..." type="password" name="confirmPass">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-outline-light" type="submit">Update Password</button>
+            </div>
+        </form>
+
+        <div id='deleteBtn' class="form-group">
+            <button class="btn btn-danger btn-block" onclick="document.getElementById('confirm-del-form').style.display='block'; document.getElementById('deleteBtn').style.display='none';">Delete Account</button>
+        </div>
+        <form id="confirm-del-form" action="/deleteAccount" method='post' style="display:none;">
+            
+            <input name="userID" type="text" value="{{ user_id }}" readonly hidden>
+
+            <div class="form-group">
+                <input class="form-control" placeholder="Please enter your password to delete your account :(" type="password" name="delConfirm">
+            </div>
+            <button class="btn btn-danger btn-block" type="submit">I want my account deleted!</button>
+        </form>
+
+    </div>
+
+
+
+    <script>document.getElementById("account-link").setAttribute("class", "active");</script>
+
+{% endblock %}

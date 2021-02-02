@@ -1,0 +1,178 @@
+{% extends "dash-layout.html" %}
+
+{% block dashScript %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+{% endblock %}
+
+{% block dashTitle %}
+    {{ user }}'s Projects
+{% endblock %}
+
+
+{% block dashMain %}
+    <!-- make this disappear after 5 secs-->
+    {% if msg %}
+    <div class="alert alert-danger border text-center" role="alert">
+        {{ msg }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-sm-3">
+            <h3>{{ user }}'s Projects</h3>
+        </div>
+        <div class="col-sm-8"></div>
+        <div class="col-sm-1">
+            <button onclick="on()" class="btn btn-primary">Create</button>
+        </div>
+    </div>
+
+    <!-- Create Forms-->
+    <div id="overlay">
+        <div class="overlay-form-holder">
+
+            <!-- shown when user clicks btn to create a new project-->
+            <form id="project-form" action="/addProject" method="post">
+                <div class="form-group">
+                    <label for="projectName">What would you like to call your project?:</label>
+                    <input id="projectName" autocomplete="off" autofocus class="form-control" name="projectName" placeholder="ex: Project X" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="dueDate">When is your project due? (Optional):</label>
+                    <input id="dueDate" autocomplete="off" class="form-control" name="dueDate" placeholder="When is your project due? (Optional)" type="date" defaultValue="omitted">
+                </div>
+                <div class="form-group">
+                    <input id="projectCreateDate" class="form-control" name="createDate" type="text" hidden>
+                    <script>
+                        let d = new Date();
+                        let today = d.getFullYear() + "-" + d.getMonth()+1 + "-" + d.getDate();
+                        document.getElementById("projectCreateDate").value = today;
+                    </script>
+                </div>
+                <button class="btn btn-primary" type="submit">Create</button>
+                <button type="button" onclick="off()" class="btn btn-warning">Cancel</button>
+            </form>
+
+             <!-- add a task -->
+            <form class="task-form" action="/addTask" method='post'>
+                <div class="form-group">
+                    <label for="taskName">What would you like to call this task?</label>
+                    <input autocomplete="off" autofocus class="form-control" name="taskName" placeholder="ex. Add ability to add tasks to projects" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskTimeEst">How long will task will take you? (Optional)</label>
+                    <div class="form-row">
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskDays" placeholder="Days" type="number" min="0"> 
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskHrs" placeholder="Hours" type="number" min="0" max="23"> 
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskMins" placeholder="Minutes" type="number" min="0" max="59">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Enter a description of task? (Optional)</label>
+                    <textarea rows='10' autocomplete="off" class="form-control task-ds" name="taskDescription" placeholder="Write down the deets..."></textarea>
+                </div>
+                <div class="form-group">
+                    <input id="projectIDforTask" name="projectID" readonly hidden>
+                    <input id="taskCreateDate" class="form-control" name="createDate" type="text" hidden>
+                    <script>
+                        let d = new Date();
+                        let today = d.getFullYear() + "-" + d.getMonth()+1 + "-" + d.getDate();
+                        document.getElementById("taskCreateDate").value = today;
+                    </script>
+                </div>
+                <button class="btn btn-primary" type="submit">Create</button>
+                <button type="button" onclick="off('t')" class="btn btn-warning">Cancel</button>
+            </form>
+
+            <!-- edit a project-->
+            <form class="edit-form" action="/editProject" method="post">
+                <div class="form-group">
+                    <label for="newName">Edit project name:</label>
+                    <input id="edit-title" autocomplete="off" autofocus class="form-control" name="newName" type="text">
+                </div>
+                <div class="form-group">
+                    <label for="newDate">Edit due date:</label>
+                    <input id="edit-due" autocomplete="off" class="form-control" name="newDue" type="date">
+                    <input id="edit-input" name="projectID" readonly hidden>
+                </div>
+                <button class="btn btn-primary" type="submit">Edit</button>
+                <button type="button" onclick="off('e')" class="btn btn-warning">Cancel</button>
+            </form>
+
+            <!-- delete a project -->
+            <form class="delete-form" action="/deleteProject" method="post">
+                <div class="form-group">
+                    <h5 id="project-delete-title"></h5>
+                    <input id="delete-input" name="projectID" readonly hidden>
+                </div>
+                <button class="btn btn-danger" type="submit">Delete</button>
+                <button type="button" onclick="off('d')" class="btn btn-warning">Cancel</button>
+            </form>
+
+            <!-- add a due date -->
+            <form class="add-due-form" action="/addDueDate" method="post">
+                <div class="form-group">
+                    <label for="addDue">Enter a due date:</label>
+                    <input autocomplete="off" autofocus class="form-control" name="addDue" type="date">
+                    <input id="add-due-input" name="projectID" readonly hidden>
+                </div>
+                <button class="btn btn-primary" type="submit">Add</button>
+                <button type="button" onclick="off('a')" class="btn btn-warning">Cancel</button>
+            </form>
+
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+
+        {% for project in projects %}
+        
+            <div class="col-sm-3">
+                <div class="card">
+                    <div class="card-body">
+                        <button style="float:right;" class="btn btn-danger del-btn" onclick="on('d'); setValForDel('{{ project[0] }}', '{{ project[1] }}')">x</button>
+                        <h2 class="card-title">{{ project[1] }}</h2>
+                        <!--Due date-->
+                        {% if not project[3] %}
+                            <button class='btn' onclick="on('a'); setID('{{ project[0] }}', 'add-due-input')">Add Due Date</button>
+                        {% else %}
+                            <h5 class="due">Due: {{ project[3] }}</h5>
+                            <h5 class="daysLeft"></h5>
+                        {% endif %}
+                        <h5>Completion: 67%</h5>
+                        <a href="/{{ user }}/{{ project[0] }}/{{ project[1] }}/dash" class="btn btn-success">Go</a>
+                        <button onclick="on('t'); setID('{{ project[0] }}', 'projectIDforTask')" class="btn btn-primary">Add Task</button>
+                        <button onclick="on('e'); setValsForEdit('{{ project[0] }}', '{{ project[1] }}', '{{ project[3] }}')" class="btn btn-warning" style="float:right;">Edit</button>
+                    </div>
+                </div>
+            </div>
+
+        {% endfor %}
+
+        <script>
+
+            document.getElementById("projects-link").setAttribute("class", "active");
+
+            let list = document.getElementsByClassName("daysLeft");
+            let dates = document.getElementsByClassName("due");
+            for (let i=0; i < list.length; i++){
+                //list[i].innerHTML += dates[i].innerHTML;
+                //due date in ms
+                let due = new Date(dates[i].innerHTML).getTime();
+                let now = new Date().getTime();
+                // Take the difference between the dates and divide by milliseconds per day.
+                let val = 1 + Math.round((due - now)/86400000);
+                if (val < 0){
+                    list[i].innerHTML += "PAST DUE!";
+                } else if (val == 0){
+                    list[i].innerHTML += "DUE TODAY!";
+                } else if (val == 1){
+                    list[i].innerHTML += "DUE TOMORROW!";
+                } else{
+                    list[i].innerHTML += "DUE IN " + val + " DAYS!";
+                }              
+            };
+        </script>
+
+{% endblock %}
+

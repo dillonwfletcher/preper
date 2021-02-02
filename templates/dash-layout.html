@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+
+{% block script %}
+    <script src="/static/main.js"></script>
+    {% block dashScript %}{% endblock %}
+{% endblock %}
+
+{% block title %}
+    {% block dashTitle %}{% endblock %} | preper
+{% endblock %}
+
+{% block nav %}
+    <!-- Dash Sidebar -->
+    <div class="container-fluid">
+        <div class="row">
+            <img src="/static/logo.png" class="logo">
+            <div class="col-md-2 bg-light d-none d-md-block sidebar">
+                <div class="left-sidebar">
+                    <ul class="nav flex-column sidebar-nav">
+                        <li id="projects-link" class="nav-item">
+                            <a class="nav-link" href="/dash-main">
+                                Projects
+                            </a>
+                        </li>
+                        <li id="tasks-link" class="nav-item">
+                            <a class="nav-link" href="/tasks">
+                                Tasks
+                            </a>
+                        </li>
+                        <li id="account-link" class="nav-item">
+                            <a class="nav-link" href="/account">
+                                Account
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+<!-- Start Main Dash Content-->
+<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4 brand-blue dash-main">
+    {% block dashMain %}{% endblock %}
+</main>
+{% endblock %}
+

@@ -1,0 +1,151 @@
+{% extends "dash-layout.html" %}
+
+{% block dashScript %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+{% endblock %}
+
+{% block dashTitle %}
+    {{ user }}'s Tasks
+{% endblock %}
+
+
+{% block dashMain %}
+    <!-- make this disappear after 5 secs-->
+    {% if msg %}
+    <div class="alert alert-danger border text-center" role="alert">
+        {{ msg }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-sm-3">
+            <h3>{{ user }}'s Tasks</h3>
+        </div>
+        <div class="col-sm-8"></div>
+        <div class="col-sm-1">
+            <button onclick="on('t')" class="btn btn-primary">Add Task</button>
+        </div>
+    </div>
+
+    <!-- Create Forms-->
+    <div id="overlay">
+        <div class="overlay-form-holder">
+
+            <!-- add a task -->
+            <form class="task-form" action="/addTask" method='post'>
+                <div class="form-group">
+                    <label for="selectProject">Which project is this task for:</label>
+                    <select name="projectID" class="form-control">
+                        <option value="" disabled selected>Select a project...</option>
+                        {% for project in projects %}
+                            <option value='{{ project [0] }}'>{{ project[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskName">What would you like to call this task?</label>
+                    <input autocomplete="off" autofocus class="form-control" name="taskName" placeholder="ex. Add ability to add tasks to projects" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskTimeEst">How long will task will take you? (Optional)</label>
+                    <div class="form-row">
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskDays" placeholder="Days" type="number" min="0"> 
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskHrs" placeholder="Hours" type="number" min="0" max="23"> 
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskMins" placeholder="Minutes" type="number" min="0" max="59">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Enter a description of task? (Optional)</label>
+                    <textarea rows='10' autocomplete="off" class="form-control" name="taskDescription" placeholder="Write down the deets..."></textarea>
+                </div>
+                <div class="form-group">
+                    <input id="taskCreateDate" name="createDate" type="text" hidden>
+                    <input name="where" type="text" hidden value="tasks">
+                    <script>
+                        let d = new Date();
+                        let today = d.getFullYear() + "-" + d.getMonth()+1 + "-" + d.getDate();
+                        document.getElementById("taskCreateDate").value = today;
+                    </script>
+                </div>
+                <button class="btn btn-primary" type="submit">Create</button>
+                <button type="button" onclick="off('t')" class="btn btn-warning">Cancel</button>
+            </form>
+
+             <!-- edit a task -->
+             <form class="edit-task-form" action="/editTask" method='post'>
+                <div class="form-group">
+                    <label for="taskName">Update task name:</label>
+                    <input id="editTaskName" autocomplete="off" autofocus class="form-control" name="taskName" placeholder="ex. Add ability to add tasks to projects" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskStatus">Update task status:</label>
+                    <select id="editTaskStatus" name="taskStatus" class="form-control">
+                        <option value="0">ToDo</option>
+                        <option value="1">In Progress</option>
+                        <option value="2">Completed</option> 
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskTimeEst">Update estimated time to complete task:</label>
+                    <div class="form-row">
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskDays" placeholder="Days" type="number" min="0"> 
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskHrs" placeholder="Hours" type="number" min="0" max="23"> 
+                        <input autocomplete="off" class="form-control col-3" style="margin: 0 5px;" name="taskMins" placeholder="Minutes" type="number" min="0" max="59">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Update task description:</label>
+                    <textarea id="editTaskD" rows='10' autocomplete="off" class="form-control task-ds" name="taskDescription" placeholder="Write down the deets..."></textarea>
+                </div>
+                <div class="form-group">
+                    <input id="parentProject" name="projectID" readonly hidden>
+                    <input id="editTaskID" name="taskID" readonly hidden>
+                    <input name="where" value="tasks" readonly hidden>
+                </div>
+                <button class="btn btn-primary" type="submit">Update</button>
+                <button class="btn btn-danger" type="submit" formaction='/deleteTask'>Delete</button>
+                <button type="button" onclick="off('t')" class="btn btn-warning" style="float: right;">Cancel</button>
+            </form>
+
+        </div>
+    </div>
+    <hr>
+    <div class="row" style="max-height: 80vh; overflow-y: auto;">
+
+        {% for task in tasks %}
+            <!-- task ==> [id, title, description, time-est, time-act, status, project_id, project_title]-->
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        
+                        <button onclick="on('et'); setValsForEditTask('{{ task[0] }}','{{ task[1] }}','{{ task[2] }}','{{ task[5] }}'); setID('{{ task[6] }}','parentProject');" class="btn btn-warning" style="float:right;">Edit</button>
+                         
+                        {% if task[5] == 0 %}
+                            {% set status = "ToDo" %}
+                        {% elif task[5] == 1 %}
+                            {% set status = "In Progress" %}
+                        {% else %}
+                            {% set status = "Completed" %}
+                        {% endif %}
+
+                        <h5 class="btn btn-outline-dark status disabled">{{ status }}</h5>
+                        <h3 class="card-title"><a href="/{{ user }}/{{ task[6] }}/{{ task[7] }}/dash" class="plink">{{ task[7] }}</a>: {{ task[1] }}</h3>
+                        <button id="showBtn{{ task[0] }}" class="btn btn-block btn-outline-dark" style="padding: 0; margin: 0;" onclick="showD('show','{{ task[0] }}')">Show Description</button>
+                        <p id="t{{ task[0] }}" class="card-text" style="margin-top: 15px; display: none">{{ task[2] }}</p>
+                        <button id="hideBtn{{ task[0] }}" class="btn btn-block btn-outline-dark" style="padding: 0; margin: 0; display: none" onclick="showD('hide','{{ task[0] }}')">Hide Description</button>
+
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %}
+        
+
+        <script>
+
+            document.getElementById("tasks-link").setAttribute("class", "active");
+
+        </script>
+
+{% endblock %}
+
